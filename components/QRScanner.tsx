@@ -111,9 +111,11 @@ export function QRScanner() {
             barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
           />
         ) : (
-          loading ? <ActivityIndicator size="large" /> : (
+          loading ? (
+            <ActivityIndicator style={{ transform: [{ translateY: 80 }] }} color="#6200E8" size="large" />
+          ) : (
             <View style={styles.logoBox}>
-              {validation ? validation === "ok" ? <ValidatedLogo /> : <ErrorLogo /> : <QRLogo />}
+              {validation ? (validation === "ok" ? <ValidatedLogo /> : <ErrorLogo />) : <QRLogo />}
             </View>
           )
         )}
