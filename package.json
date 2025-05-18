@@ -14,11 +14,13 @@
     "@supabase/supabase-js": "^1.35.7",
     "eventloop-validator": "file:",
     "expo": "~53.0.9",
+    "expo-camera": "~16.1.6",
     "expo-status-bar": "~2.2.3",
     "react": "19.0.0",
     "react-native": "0.79.2",
-    "react-native-url-polyfill": "^2.0.0",
-    "expo-camera": "~16.1.6"
+    "react-native-keyboard-aware-scroll-view": "^0.9.5",
+    "react-native-svg": "15.11.2",
+    "react-native-url-polyfill": "^2.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
