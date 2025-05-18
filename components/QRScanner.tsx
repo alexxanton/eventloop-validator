@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Alert, ActivityIndicator } from "react-native";
 import { Button } from "@rneui/themed";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QRLogo } from "../assets/QRLogo";
 import { useData } from "./DataProvider";
 import { supabase } from "../lib/supabase";
+import { ValidatedLogo } from "../assets/ValidatedLogo";
+import { ErrorLogo } from "../assets/ErrorLogo";
 
 const privilegedRoles = ["validator", "admin", "organizer", "owner"];
 
 export function QRScanner() {
   const { user, setUser } = useData();
   const [isCameraActive, setIsCameraActive] = useState(false);
+  const [validation, setValidation] = useState("");
+  const [loading, setLoading] = useState(false);
   const [scannedData, setScannedData] = useState("");
   const [scanned, setScanned] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
@@ -24,25 +28,44 @@ export function QRScanner() {
     setScanned(true);
     setScannedData(data);
     setIsCameraActive(false);
-    validateTicket(data);
+    setLoading(true);
+    await validateTicket(data);
+    setLoading(false);
   };
 
   const validateTicket = async (id: string) => {
-    const { data: ticket } = await supabase
+    try {
+      const { data: ticket } = await supabase
       .from("tickets")
       .select("*, event:events(*, group:groups(*, members:group_members(user_id, role)))")
-      .eq("ticket_number", id);
+      .eq("ticket_number", id)
+      .throwOnError();
 
     const members = ticket && ticket[0]?.event?.group?.members;
     const loggedInMember = members?.find((member: { user_id: string | undefined; }) => member.user_id === user?.id);
     const userRole = loggedInMember?.role;
     const canValidate = privilegedRoles.includes(userRole);
+    console.log(ticket)
 
     if (loggedInMember && canValidate) {
+      if (ticket && ticket[0].validated) {
+        setValidation("error");
+        return;
+      }
+
+      setValidation("ok");
       const { error } = await supabase
         .from("tickets")
         .update({validated: true})
         .eq("ticket_number", id);
+
+      return;
+    }
+
+    setValidation("");
+    Alert.alert("You don't have permission to validate this ticket.");
+    } catch (error) {
+      console.log(error)
     }
   };
 
@@ -54,12 +77,12 @@ export function QRScanner() {
       setIsCameraActive(!isCameraActive);
       setScanned(false);
     }
+    setValidation("");
   };
 
-  const handleTopRightButtonPress = async () => {
+  const handleSignOut = async () => {
     setUser(null);
     await AsyncStorage.setItem("supabase.session", "");
-    console.log("Sing out");
   };
 
   if (!permission) {
@@ -70,7 +93,7 @@ export function QRScanner() {
     <View style={styles.container}>
       <View style={styles.topRightButton}>
         <Button
-          onPress={handleTopRightButtonPress}
+          onPress={handleSignOut}
           radius={30}
           color="#6200E8"
         >
@@ -88,9 +111,11 @@ export function QRScanner() {
             barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
           />
         ) : (
-          <View style={styles.logoBox}>
-            <QRLogo />
-          </View>
+          loading ? <ActivityIndicator size="large" /> : (
+            <View style={styles.logoBox}>
+              {validation ? validation === "ok" ? <ValidatedLogo /> : <ErrorLogo /> : <QRLogo />}
+            </View>
+          )
         )}
       </View>
 

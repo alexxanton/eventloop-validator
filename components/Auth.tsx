@@ -2,9 +2,7 @@ import React, { useState } from "react";
 import {
   Alert,
   StyleSheet,
-  Text,
   Keyboard,
-  Platform,
   TouchableWithoutFeedback,
   View,
 } from "react-native";

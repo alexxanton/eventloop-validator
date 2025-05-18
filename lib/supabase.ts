@@ -12,10 +12,12 @@ type ExpoConfigExtra = {
 const { supabaseUrl, supabaseKey } = Constants.expoConfig?.extra as ExpoConfigExtra;
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
-  localStorage: AsyncStorage,
+  localStorage: {
+    getItem: (key) => AsyncStorage.getItem(key),
+    setItem: (key, value) => AsyncStorage.setItem(key, value),
+    removeItem: (key) => AsyncStorage.removeItem(key),
+  },
   detectSessionInUrl: false,
-  persistSession: true,
-  autoRefreshToken: true,
 });
 
 // Tells Supabase Auth to continuously refresh the session automatically
